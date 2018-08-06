@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+nodemon --ext cpp --exec "g++ -o a.out main.cpp && ./a.out"
