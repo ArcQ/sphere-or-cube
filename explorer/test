@@ -1,1 +1,2 @@
-nodemon --ext cpp, h --exec "cmake -B build && make test --directory ./build || true"
+cd build
+nodemon --watch ../src --ext cpp, h --exec "cmake ../ && make && ./${1} || true"
