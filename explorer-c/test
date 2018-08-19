@@ -1,0 +1,2 @@
+cd build
+nodemon --watch ../src --ext c, h --exec "cmake ../ && make && ./${1} || true"

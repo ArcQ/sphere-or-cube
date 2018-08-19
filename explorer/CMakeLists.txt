@@ -6,17 +6,10 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# TESTING with catch2
-# set(CATCH_INCLUDE_DIR lib/catch)
-#
-# add_executable(Catch test.cpp)
-# add_library(Catch INTERFACE)
-# target_include_directories(Catch INTERFACE ${CATCH_INCLUDE_DIR})
-# target_link_libraries(MapMakertests Catch2::Catch2)
-#
-# include(CTest)
-# include(Catch)
-# catch_discover_tests(MapMakerTests)
+include_directories(
+  src/HardwareInterfaces
+  src/MapMaker
+  )
 
 enable_testing()
 
