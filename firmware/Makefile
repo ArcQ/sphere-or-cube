@@ -12,12 +12,12 @@ test:
 	avrdude -c avrispv2 -p m328p -P /dev/ttyACM0 -e -v -U flash:w:blinkLED.hex
 
 build:
-	avr-gcc -g -Os -Wall -mcall-prologues -mmcu=atmega328 -c -o wheel.o wheel.c
-	avr-gcc -g -Os -Wall -mcall-prologues -mmcu=atmega328 wheel.o -o wheel.obj
-	avr-objcopy -R .eeprom -O ihex wheel.obj wheel.hex
+	avr-gcc -g -Os -Wall -mcall-prologues -mmcu=atmega328 -c -o main.o main.c
+	avr-gcc -g -Os -Wall -mcall-prologues -mmcu=atmega328 main.o -o main.obj
+	avr-objcopy -R .eeprom -O ihex main.obj main.hex
 
 flash:
-	avrdude -c avrispv2 -p m328p -P /dev/ttyACM0 -e -v -U flash:w:wheel.hex
+	avrdude -c avrispv2 -p m328p -P /dev/ttyACM0 -e -v -U flash:w:main.hex
 
 clean:
 	rm *.elf *.obj *.hex *.o
