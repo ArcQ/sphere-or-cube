@@ -5,72 +5,79 @@
 #define FORWARD 1
 #define BACKWARD 2
 
-static inline void initADC0(void) {
-    ADMUX |= (1 << REFS0); // Reference voltage on AVCC
-    ADCSRA |= (1 << ADPS1) | (1 << ADPS0); // ADC clock prescaler /8
-    ADCSRA |= (1 << ADEN); // Enable ADC
-}
-int main() {
-    return sense_tap();
+
+static inline void init_l289n(void) {
+
+    /* ------ Set output pins ------- */
+    // PD0 connected to IN1 (pin 8)
+    // PD1 connected to IN2 (pin 9)
+    DDRD = (1 << PIND0) | (1 << PIND1);
+    // PB1 connected to ENA (pin 7)
+    DDRB = (1 << PINB1);
+
+    // Output Compare register
+    OCR1A = 0x01FF;
+
+    /* -------- Timer Counter 1 Control Register A ------------ */
+    // OC1A output overrides the normal port functionality of I/O pin it is
+    // connected to
+    TCCR1A |= (1 << COM1A1);
+    // set non-inverting mode
+    // PWM phase correct 10 bit
+    TCCR1A |= (1 << WGM11) | (1 << WGM10);
+    // set 10bit phase corrected PWM Mode
+
+    /* -------- TC1 Control Register B ------------ */
+    TCCR1B |= (1 << CS11);
 }
 
-int sense_tap() {
+static inline void init_adc0(void) {
+    ADMUX |= (1 << REFS0); // Reference voltage on AVCC (disables AREF usage)
+
+    // ADC Control and  Status Register A
+    ADCSRA |= (1 << ADPS1) | (1 << ADPS0); // ADC clock prescaler /8
+    ADCSRA |= (1 << ADEN); // Enable ADC
+
+    // ADCSRA |= (1 << ADATE); // Enable ADC Auto Trigger Enable Bit
+
+    // ADCSRA |= (1 << ADTS2); // Select trigger source for Auto Trigger Enable
+
+    // You can use the ADC Interrupt Flag as a trigger source to make the ADC
+    // start a new conversion as soon as the ongoing conversion has finished 
+    // ADCSRA |= (1 << ADIF);
+}
+
+
+int main() {
     /* If the piezo sensor senses a vibration, light up the LED */
 
     // uint8_t led_value;
     // uint8_t i;
     uint16_t adc_value;
 
-    initADC0();
-    DDRB = (1 << DDB0);
-    PORTB = 0;
+    init_adc0();
+    init_l289n();
+
+    // Initialize indicator LED
+    DDRB |= (1 << PINB0);
+    PORTB = (1 << PINB0);
+
+    // Initialize Direction of Wheels
+    PORTD |= (1 << PIND0);
 
     while (1) {
-        ADCSRA |= (1 << ADSC);
+        // Datasheet specification for a single conversion
+        PRR &= ~(1 << PRADC); // Write 0 to Power Reduction ADC bit
+        ADCSRA |= (1 << ADSC); // Write 1 to ADC Start Conversion bit
+        // ADCS will stay high while conversion is in progress, low when done
+
+        PORTD = 0b0000001;
 
         adc_value = ADC;
         if (adc_value < 512) {
-            PORTB = (1 << PORTB0);
-            // PORTB = 0;
-        } else {
-            // PORTB = (1 << PORTB0);
-            PORTB = 0;
+            PORTD ^= (1 << PIND0) | (1 << PIND1); // Toggle only 
+            PORTB ^= (1 << PINB0);  // Toggle only PB0
         }
     }
     return 0;
-}
-
-void change_direction(int dir) {
-    PORTD = dir;
-}
-
-int run_wheel(void) {
-    /* Run wheels at constant speed, switch direction every 2 seconds */
-    
-    // Data Direction Register D, the 1 enables output. 0 is input
-    DDRD = 0b00000011;
-
-    // SET H-BRIDGE PWM INPUT AS A CONSTANT FOR NOW
-    DDRB |= (1 << DDB1);
-    // PB1 as output
-    OCR1A = 0x01FF;
-    // set PWM for 50% duty cycle at 10bit
-    TCCR1A |= (1 << COM1A1);
-    // set non-inverting mode
-    TCCR1A |= (1 << WGM11) | (1 << WGM10);
-    // set 10bit phase corrected PWM Mode
-    TCCR1B |= (1 << CS11);
-    // set prescaler to 8 and starts PWM
-
-    // -------- Event Loop -------
-    while (1) {
-        change_direction(FORWARD);
-        _delay_ms(2000);
-        change_direction(BACKWARD);
-        _delay_ms(2000);
-        // PORTD =  0b00000010;
-        // _delay_ms(5000);
-        // PORTD =  0b00000001;
-        // _delay_ms(5000);
-    }
 }
