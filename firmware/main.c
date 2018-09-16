@@ -64,6 +64,8 @@ int main() {
 
     // Initialize Direction of Wheels
     PORTD |= (1 << PIND0);
+    // Initialize input variable from piezo sensor
+    int vibration_sensed = 0;
 
     while (1) {
         // Datasheet specification for a single conversion
@@ -71,12 +73,17 @@ int main() {
         ADCSRA |= (1 << ADSC); // Write 1 to ADC Start Conversion bit
         // ADCS will stay high while conversion is in progress, low when done
 
-        PORTD = 0b0000001;
-
         adc_value = ADC;
         if (adc_value < 512) {
-            PORTD ^= (1 << PIND0) | (1 << PIND1); // Toggle only 
-            PORTB ^= (1 << PINB0);  // Toggle only PB0
+            if (!vibration_sensed) {
+                PORTD ^= ((1 << PIND0) | (1 << PIND1)); // Toggle only 
+                // PORTD ^= (1 << PIND0); // Toggle only 
+                // PORTD ^= (1 << PIND1); // Toggle only 
+                PORTB ^= (1 << PINB0);  // Toggle only PB0
+                vibration_sensed = 1;
+            }
+        } else {
+            vibration_sensed = 0;
         }
     }
     return 0;
